@@ -37,6 +37,18 @@ function getQuantityValueAndUnit(ob) {
   }
 }
 
+//helper function to get quanity and unit from an observation resoruce.
+function getQuantityValue(ob) {
+  if (typeof ob != 'undefined' &&
+    typeof ob.valueQuantity != 'undefined' &&
+    typeof ob.valueQuantity.value != 'undefined' &&
+    typeof ob.valueQuantity.unit != 'undefined') {
+    return Number(parseFloat((ob.valueQuantity.value)).toFixed(2));
+  } else {
+    return undefined;
+  }
+}
+
 // helper function to get both systolic and diastolic bp
 function getBloodPressureValue(BPObservations, typeOfPressure) {
   var formattedBPObservations = [];
