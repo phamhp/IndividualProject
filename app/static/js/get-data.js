@@ -100,7 +100,7 @@ function displayCheckupRecommendation(_string) {
   visit_list.innerHTML += "<li> " + _string + "</li>";
 }
 
-unction render(data, _flag) {
+function render(data, _flag) {
 
   if(_flag == 0){
   console.log("Render for checkup!")
