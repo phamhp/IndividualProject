@@ -25,6 +25,11 @@ function displayMedication(meds) {
   med_list.innerHTML += "<li> " + meds + "</li>";
 }
 
+//function to display info about checkup missing
+function displayNoInfomationForHDL(_string) {
+  hdl_list.innerHTML += "<li> " + _string + "</li>";
+}
+
 //helper function to get quanity and unit from an observation resoruce.
 function getQuantityValueAndUnit(ob) {
   if (typeof ob != 'undefined' &&
@@ -271,13 +276,17 @@ FHIR.oauth2.ready().then(function (client) {
           _hdl_arary.push({ "year": key, "total": _hdl_dict[key] });
         }
         
-      var data = _hdl_arary.map(d => {
-        return {
-          year: d[Object.keys(d)[0]],
-          total: d[Object.keys(d)[1]]
+        if(_hdl_arary.length >0){
+          var data = _hdl_arary.map(d => {
+            return {
+              year: d[Object.keys(d)[0]],
+              total: d[Object.keys(d)[1]]
+            }
+          });
+          render(data,1);
+        }else {
+          displayNoInfomationForHDL("No data available.");
         }
-      });
-      render(data,1);
 
       p.hdl = getQuantityValueAndUnit(hdl[0]);
       p.ldl = getQuantityValueAndUnit(ldl[0]);

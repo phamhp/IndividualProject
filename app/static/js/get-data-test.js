@@ -5,7 +5,7 @@ var _ignore_year = new Date("2010");
 const client = new FHIR.client({
   serverUrl: "https://r4.smarthealthit.org",
   tokenResponse: {
-    patient: "494743a2-fea5-4827-8f02-c2b91e4a4c9e"
+    patient: "fc200fa2-12c9-4276-ba4a-e0601d424e55"
   }
 });
 
@@ -121,7 +121,10 @@ function displayObservation(obs) {
 function displayCheckupRecommendation(_string) {
   visit_list.innerHTML += "<li> " + _string + "</li>";
 }
-
+//function to display info about checkup missing
+function displayNoInfomationForHDL(_string) {
+  hdl_list.innerHTML += "<li> " + _string + "</li>";
+}
 function render(data, _flag) {
 
   if(_flag == 0){
@@ -283,15 +286,17 @@ function render(data, _flag) {
         for (var key in _hdl_dict) {
           _hdl_arary.push({ "year": key, "total": _hdl_dict[key] });
         }
-        
-      var data = _hdl_arary.map(d => {
-        return {
-          year: d[Object.keys(d)[0]],
-          total: d[Object.keys(d)[1]]
-        }
-      });
-      render(data,1);
-
+      if(_hdl_arary.length >0){
+        var data = _hdl_arary.map(d => {
+          return {
+            year: d[Object.keys(d)[0]],
+            total: d[Object.keys(d)[1]]
+          }
+        });
+        render(data,1);
+      }else {
+        displayNoInfomationForHDL("No data available!");
+      }
       p.hdl = getQuantityValueAndUnit(hdl[0]);
       p.ldl = getQuantityValueAndUnit(ldl[0]);
       p.weight = getQuantityValueAndUnit(weight[0]);
