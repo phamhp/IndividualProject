@@ -1,6 +1,7 @@
 //adapted from the cerner smart on fhir guide. updated to utalize client.js v2 library and FHIR R4
 
 // helper function to process fhir resource to get the patient name.
+var _ignore_year = new Date("2010");
 function getPatientName(pt) {
   if (pt.name) {
     var names = pt.name.map(function (name) {
@@ -99,9 +100,12 @@ function displayCheckupRecommendation(_string) {
   visit_list.innerHTML += "<li> " + _string + "</li>";
 }
 
-function render(data) {
+unction render(data, _flag) {
+
+  if(_flag == 0){
+  console.log("Render for checkup!")
   console.log(data);
-  var svg = d3.select("svg");
+  var svg = d3.select("#svg");
   var margin = 30;
   var width = svg.attr("width") - margin;
   var height = svg.attr("height") - margin;
@@ -135,6 +139,45 @@ function render(data) {
     .attr("y", function (d) { return yScale(d.total); })
     .attr("width", _barWidth)
     .attr("height", function (d) { return height - yScale(d.total); });
+  }//end iff
+  else {
+    console.log("Render for HDL!")
+    console.log(data);
+    var svg = d3.select("#svg_cholesterol");
+    var margin = 30;
+    var width = svg.attr("width") - margin;
+    var height = svg.attr("height") - margin;
+    var _barWidth = 15;
+  
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.total)])
+      .range([height, 0]);
+    var xScale = d3.scaleBand().range([0, width]).padding(0.4);
+    xScale.domain(data.map(function (d) { return d.year; }));
+  
+    var g = svg.append("g")
+      .attr("transform", "translate(" + 25 + "," + 0 + ")");
+  
+    g.append("g")
+      .attr("transform", "translate(-5," + height + ")")
+      .call(d3.axisBottom(xScale));
+  
+    g.append("g")
+      .call(d3.axisLeft(yScale))
+      .attr("transform", "translate(0," + 0 + ")");
+      if (d3.keys(data).length < 5){
+        _barWidth = 50;
+      }
+    g.selectAll("bar")
+      .data(data)
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("fill", "#ff0000")
+      .attr("x", function (d) { return xScale(d.year); })
+      .attr("y", function (d) { return yScale(d.total); })
+      .attr("width", _barWidth)
+      .attr("height", function (d) { return height - yScale(d.total); });
+  }
 }
 
 //once fhir client is authorized then the following functions can be executed
@@ -197,13 +240,33 @@ FHIR.oauth2.ready().then(function (client) {
         p.dia = 'undefined'
       }
       var _latestObs = weight[0];
-      console.log(weight);
-      console.log("Latest weight:");
-      console.log(_latestObs);
-      var _latestNotes = _latestObs.note;
-      if (typeof _latestNotes != 'undefined') {
-        displayAnnotation(_latestNotes[_latestNotes.length - 1]['text']);
-      }
+      _hdl_dict = {};
+      _hdl_arary = [];
+      hdl.forEach(function(_individual) {
+        console.log('observation:');
+        
+        var _date = new Date(_individual.effectiveDateTime);
+        var _year = _date.getFullYear();
+        console.log(getQuantityValue(_individual));
+        console.log(_year);
+        if (_date > _ignore_year) {
+          //console.log(_year);
+          _hdl_dict[_year] = getQuantityValue(_individual);
+        }// end if _year > ignore_year
+      }); //end loop
+
+        for (var key in _hdl_dict) {
+          _hdl_arary.push({ "year": key, "total": _hdl_dict[key] });
+        }
+        
+      var data = _hdl_arary.map(d => {
+        return {
+          year: d[Object.keys(d)[0]],
+          total: d[Object.keys(d)[1]]
+        }
+      });
+      render(data,1);
+
       p.hdl = getQuantityValueAndUnit(hdl[0]);
       p.ldl = getQuantityValueAndUnit(ldl[0]);
       p.weight = getQuantityValueAndUnit(weight[0]);
@@ -273,7 +336,7 @@ FHIR.oauth2.ready().then(function (client) {
   }
 
   //event listner when the add button is clicked to call the function that will add the note to the weight observation
-  document.getElementById('add').addEventListener('click', addWeightAnnotation);
+  //document.getElementById('add').addEventListener('click', addWeightAnnotation);
 
 
   var _checkUpDict = {};
@@ -284,7 +347,6 @@ FHIR.oauth2.ready().then(function (client) {
   const _string = "check up";
   var query2 = new URLSearchParams();
   var _isCheckupRecently = 0;
-  var _ignore_year = new Date("2010");
   query2.set("patient", client.patient.id);
   client.request("Encounter?" + query2, {
     pageLimit: 0,
@@ -345,7 +407,7 @@ FHIR.oauth2.ready().then(function (client) {
             total: d[Object.keys(d)[1]]
           }
         });
-        render(data);
+        render(data,0);
       } else {
         displayCheckupRecommendation("No checkup records available in the last 10 years!");
       }//end if else 
